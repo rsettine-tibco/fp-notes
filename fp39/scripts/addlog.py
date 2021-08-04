@@ -6,7 +6,7 @@ import sys
 At times, we may not know the flow. In order to see, we add the log statement in the operation / method of .act file.
 This script can add the log statement at begin and end of an operation in act file instead of manually add the same.
 It is helpful to automatically add the log when the file is big or required to change multiple files.
-And generates changed file under /tmp directory. This is to not overwrite the original in case of this script incorrect places the logging.
+And generates changed file under /tmp directory. This is to not overwrite the original in case of this script incorrectly places the logging.
 Once you confirm the new file is good, have backup of original and place this file before building the component.
 Takes an input parameter i.e., absolute path of .act file
 """
