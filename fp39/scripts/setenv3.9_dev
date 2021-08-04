@@ -1,0 +1,4 @@
+#!/bin/bash
+export SW_HOME=/opt/kabira/users/${USER}
+export TEST_HOME=${SW_HOME}_test
+export PATH="$SW_HOME/distrib/kabira/bin:$SW_HOME/distrib/kabira/scripts:$SW_HOME/distrib/kabira/kpsa/scripts:$PATH"
