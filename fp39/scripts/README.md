@@ -10,7 +10,7 @@ This script requires 4 aruments. For more details, please refer [here](https://g
 Use this script to set the development envrionment profile. However, use this profile only to run the examples as this uses `bash` shell. 
 
 ### [importfpsrc.ksh](https://github.com/rsettine-tibco/fp-notes/blob/main/fp39/scripts/importfpsrc.ksh)
-This script is used to download the source code from svn.
+This script is used to download the source code from svn. During the download, it also does additional things such as creates the soft links that required, linking to 3rdparty etc., (which otherwsie will not happen if we use `svn` command to download the source)
 
 ### [addlog.py](https://github.com/rsettine-tibco/fp-notes/blob/main/fp39/scripts/addlog.py)
 This script can be used to add the logging to `.act` file when needed.
