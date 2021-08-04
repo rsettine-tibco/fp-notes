@@ -60,6 +60,7 @@ runtest.ksh [-b buildType][-v][-x] [-a application] [-C company] -s
 Noticed that runtest.ksh calling the script => $SW_HOME/ftp/paftp/linux/include/testenv.ksh
 $SW_HOME/ftp/paftp/linux/include/testenv.ksh => $SW_HOME/distrib/kabira/include/runtest.env
 $SW_HOME/distrib/kabira/include/runtest.env => $SW_HOME/distrib/kabira/include/swenv.sh
+also used $SW_HOME/distrib/kabira/bin/swregistry
 
 Learnt that, user have to modify below data in runtest.ksh; at least ftp connection,  directory name credentials
 ----------------
