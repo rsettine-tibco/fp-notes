@@ -8,7 +8,6 @@ swdc -c start
 ```
 It will show the following in the console
 ```
-dmake BUILD=ALL
 
 INFO: Starting Design Center at /opt/kabira/users/rsettine/BUILD.
 
