@@ -26,7 +26,8 @@ dmake:  Error code 250, while making '/opt/kabira/users/rsettine/BUILD/paftp/paf
 The above got addressed when build from ftp/paftp/linux/include; this has copied the globbuiltin.h under $SW_HOME/distrib/kabira/include directory.
 
 ==> Testing FTP:
-In order to test ftp connectivity, have to build it from 
+In order to test ftp connectivity, have to build it first.
+Go to $SW_HOME/ftp/paftp/linux/test
 trocadero:/opt/kabira/users/rsettine/ftp/paftp/linux/test => dmake BUILD=ALL
 
 Then run the script ./runtest.ksh
@@ -59,3 +60,23 @@ runtest.ksh [-b buildType][-v][-x] [-a application] [-C company] -s
 Noticed that runtest.ksh calling the script => $SW_HOME/ftp/paftp/linux/include/testenv.ksh
 $SW_HOME/ftp/paftp/linux/include/testenv.ksh => $SW_HOME/distrib/kabira/include/runtest.env
 $SW_HOME/distrib/kabira/include/runtest.env => $SW_HOME/distrib/kabira/include/swenv.sh
+
+Learnt that, user have to modify below data in runtest.ksh; at least ftp connection,  directory name credentials
+----------------
+TESTDIR=/var/tmp/ftptest/
+KSHUSER=`whoami`
+#HOSTNAME=angel.kabira.com
+HOSTNAME=mars.kabira.fr
+PWDEXE=`which pwd`
+CPEXE=`which cp`
+
+#FTPUSER=appsfwx
+#FTPUSER=support
+FTPUSER=fcm
+#FTPPASS=one12two
+#FTPPASS=Support2012
+FTPPASS=1typo+FULFI
+UPLDDIR=upload
+DWLDDIR=download
+FTPTSTDIR=ftptest
+-----------------
