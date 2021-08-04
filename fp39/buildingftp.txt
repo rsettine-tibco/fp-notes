@@ -1,0 +1,9 @@
+trocadero:/opt/kabira/users/rsettine/ftp/paftp/linux/include => dmake BUILD=ALL
+trocadero:/opt/kabira/users/rsettine/ftp/paftp/linux/libsrc => dmake BUILD=ALL
+trocadero:/opt/kabira/users/rsettine/ftp/paftp/linux/src => dmakeBUILD=ALL
+
+In case, any intermediate error, and like to clean, then run => dmake clobber or dmake clobberdc
+
+When there is error for missing header file, then check for the same under below directories
+# ls $SW_HOME/distrib/kabira/include
+# ls $SW_HOME/distrib/kabira/lib
