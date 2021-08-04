@@ -1,0 +1,2684 @@
+#!/bin/ksh
+
+if [ "$1" = "" ]
+then
+    echo "1st argument : username missing"
+    return
+fi
+
+if [ "$2" = "" ]
+then
+    echo "2nd argument : project missing"
+    return
+fi
+
+if [ "$3" = "" ]
+then
+    echo "3rd argument : vnc server missing missing"
+    return
+fi
+
+if [ "$4" = "" ]
+then
+    echo "4th argument : vnc number missing"
+    return
+fi
+
+export DISPLAY=$3:$4.0
+
+if [ ! -d /opt/kabira/users/$1 ]
+then
+    echo "/opt/kabira/users/$1 doesn't exist"
+    echo "creating /opt/kabira/users/$1 ..."
+    cd /opt/kabira/users
+    mkdir $1
+    
+fi
+
+if [ ! -d /opt/kabira/users/$1/$2 ]
+then
+	echo "/opt/kabira/users/$1/$2 doesn't exist"
+    echo "creating /opt/kabira/users/$1/$2 ..."
+    cd /opt/kabira/users/$1
+    mkdir $2
+    
+fi
+
+export SW_HOME=/opt/kabira/users/$1
+
+cd ~/
+
+#-------------------------------------------------------------------------------
+# Functions
+#-------------------------------------------------------------------------------
+Addpath()
+{  
+#    if [ ! -d $1 ]
+#    then
+#         echo "Addpath: $1 does not exist"
+#    fi
+	PATH=$PATH:$1 
+	export PATH
+
+	#PATH=$1:$PATH
+	#export PATH
+}
+
+AddLibraryPath()
+{
+#    if [ ! -d $1 ]
+#    then
+#        echo "AddLibraryPath: $1 does not exist"
+#    fi
+	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$1
+	export LD_LIBRARY_PATH
+
+	#LD_LIBRARY_PATH=$1:$LD_LIBRARY_PATH
+	#export LD_LIBRARY_PATH
+}
+
+#****************************************************************
+#********************* KABIRA Technologies **********************
+#****************************************************************
+stty erase ^?
+stty erase ^N
+export HOME=`/bin/pwd`
+
+unset PATH
+unset LD_LIBRARY_PATH
+unset OPENSSL
+unset TNS_ADMIN
+unset SDD_BIN
+unset SW_PLATFORM
+
+PLAT=`/bin/uname`
+case ${PLAT} in
+	Linux)
+		export SW_PLATFORM=linux
+		export USERNAME=`/usr/bin/whoami`
+		export HOST=`/bin/uname -n`
+		if [ "$HOST" = "cheetah" ]
+		then
+			export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/0.9.7c_ia64
+			Addpath /opt/kabira/3rdparty/$SW_PLATFORM/dmake/4.1_ia64
+			Addpath /opt/kabira/3rdparty/$SW_PLATFORM/gnu/1.1/bin
+		else
+			#export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/1.0.2j_x86_64
+			Addpath /opt/kabira/3rdparty/$SW_PLATFORM/dmake/4.1_x86_64
+#Addpath /opt/kabira/3rdparty/$SW_PLATFORM/dmake/4.11_x86_64/bin
+			Addpath /opt/kabira/3rdparty/$SW_PLATFORM/gnu/1.1/bin_x86_64
+		fi
+	;;
+        HP-UX)
+		export SW_PLATFORM=hpux
+		export USERNAME=`/bin/whoami`
+	;;
+	*)
+		export SW_PLATFORM=sol
+		export USERNAME=`/usr/ucb/whoami`
+		export HOST=`/usr/bin/uname -n`
+		export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/0.9.8o_64
+		Addpath /opt/kabira/3rdparty/$SW_PLATFORM/dmake/4.1_64
+		Addpath /usr/local/bin 
+		Addpath /opt/kabira/3rdparty/$SW_PLATFORM/gnu/1.1/bin
+	;;
+esac
+
+if [ -d /opt/kabira/users/$1/distrib/kabira/ide/scripts ]
+then
+    Addpath /opt/kabira/users/$1/distrib/kabira/ide/scripts
+fi
+
+if [ -d /opt/kabira/users/$1/distrib/kabira/projectservice/scripts ]
+then
+    Addpath /opt/kabira/users/$1/distrib/kabira/projectservice/scripts
+	alias kps='/opt/kabira/users/ognBSCSALU/distrib/kabira/projectservice/scripts/projectservice'
+fi
+
+Addpath /opt/tibco/tools
+Addpath /usr/local/bin
+Addpath /usr/bin
+Addpath /usr/xpg4/bin
+Addpath /bin
+Addpath /usr/sbin
+Addpath /usr/openwin/bin
+Addpath /usr/local/vnc
+Addpath /usr/dt/bin
+Addpath /usr/ucb
+Addpath /usr/ccs/bin
+Addpath /usr/local/gnu/bin
+Addpath /usr/local/bin
+Addpath /import/home/ogermain/bin
+
+export TZ=MET
+export HOSTNAME=`uname -n`
+
+case $USERNAME in
+	toto)
+		export PS1='\e[1;33m$HOSTNAME:\e[1;35m$PWD>\e[0;37m\n'
+	;;
+	*)
+		export PS1='$HOSTNAME:$PWD -> '
+	;;
+esac
+
+export MANPATH=/usr/dt/man:/usr/man:/usr/openwin/share/man:/usr/local/man
+set -o ignoreeof
+
+#******* CVS *******
+export CVSEDITOR=vi
+export CVS_RSH=ssh
+
+
+#********** Objectswitch **********
+
+Addpath /opt/forte62/SUNWspro/bin
+
+Addpath $SW_HOME/distrib/kabira/scripts
+Addpath $SW_HOME/distrib/kabira/bin
+Addpath $SW_HOME/distrib/kabira/devbin
+
+Addpath  $SW_HOME/distrib/kabira/kts/config/scripts
+Addpath  $SW_HOME/distrib/kabira/kts/scripts
+
+######### KPSA ###############
+Addpath $SW_HOME/distrib/kabira/kpsa/scripts
+
+#LD_LIBRARY_PATH
+AddLibraryPath /lib
+AddLibraryPath /lib64
+AddLibraryPath /usr/openwin/lib
+AddLibraryPath /usr/lib
+AddLibraryPath $SW_HOME/distrib/kabira/lib
+#AddLibraryPath $SW_HOME/3rdparty/linux/xml4c/5.0.0_x86_64/lib
+AddLibraryPath $OPENSSL/lib
+
+####################ATERMON (tmp)##############
+if [ "$1" = "support_tests" ]
+then
+	echo "ATERMON project"
+	export SW_HOME=/opt/softwire/develop/users/$1/$2
+	Addpath /import/home/rrocca/opt/bin
+	export M4=/import/home/rrocca/opt/bin/m4
+	AddLibraryPath $SW_HOME/xNetMine/lib
+fi
+
+####################ognKPSA34Hitachi ##########
+if [ "$1" = "ognKPSA34Hitachi" ]
+then
+        export ORACLE_SID=DB10G264.KABIRA.FR
+        export ORACLE_HOME=/opt/oracle/10g2_64
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+fi
+
+#####################ogn PAF56 ##############
+if [ "$1" = "ognPAF56" ]
+then 
+	#export ODBCINI=/opt/kabira/users/ognPAF56/testodbc56/odbc.ini
+	#AddLibraryPath /opt/kabira/users/ognPAF56/3rdparty/sol/odbc/53_64/lib
+
+        export ORACLE_SID=DB10G264.KABIRA.FR
+        #export ORACLE_SID=DB10G264
+
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        #AddLibraryPath /opt/kabira/users/ogn_odo_kpsa_src/3rdparty/sol/odbc/51_64/lib
+        AddLibraryPath $ORACLE_HOME/lib
+
+fi
+
+####################VODAFONE###################
+if [ "$1" = "vfe07" ]
+then
+	echo "VFE07 project"
+	Addpath .
+	Addpath /usr/X/bin
+ 
+	#Aliases
+	alias dmake='dmake BUILD=PRODUCTION'
+	alias systemtest='cd $SW_HOME/mgw/sol/systemtest;echo $PWD'
+	alias runtime='cd $SW_HOME/mgw/sol/systemtest/runtime;echo $PWD'
+	alias sysruntime='cd $SW_HOME/mgw/sol/systemtest/sysruntime;echo $PWD'
+	alias component='ll $SW_HOME/release/sol/component | more' 
+fi
+
+####################TELESTET###################
+if [ "$1" = "telestet_mig_np" ]
+then
+	echo "TELESTET project"
+	export SW_HOME=/opt/softwire/develop/users/$1/$2
+	AddLibraryPath $SW_HOME/runtime/test/lib
+ 
+	alias tail='/import/home/vdesabou/bin/tail'
+fi
+
+####################ORANGE MMS################
+if [ "$1" = "orange" ]
+then
+	echo "ORANGE MMS project"
+	export SW_HOME=/opt/softwire/develop/users/$1/$2
+ 
+	export GNUBIN=/usr/local/gnu/bin
+	Addpath $GNUBIN
+	Addpath /usr/ucblib
+
+	#---- perl stuff ----
+	Addpath /usr/perl5/5.00503
+	Addpath /usr/perl5/5.00503/sun4-solaris
+	Addpath /usr/perl5/site_perl/5.005/sun4-solaris
+	Addpath /usr/perl5/site_perl/5.005
+	Addpath /usr/perl5/bin
+
+ 
+	#---- CORBA IONA -----
+	export ORB=/opt/iona
+	export NameService=$ORB/bin
+	export IT_CONFIG_PATH=$SW_HOME/orange_mms_phase2/sol/config
+	export IT_DAEMON_PORT=1570
+	export IT_DAEMON_SERVER_BASE=1590
+	export IT_IMP_REP_PATH=$SW_HOME/orange_mms_phase2/sol/config/Repositories/ImpRep
+	export IT_INT_REP_PATH=$SW_HOME/orange_mms_phase2/sol/config/Repositories/IntRep
+	export IT_ERRORS=$SW_HOME/orange_mms_phase2/sol/config/ErrorMsgslib
+ 
+	AddLibraryPath $ORB/lib 
+	Addpath $ORB/bin
+
+	#---- Visi Broker ----
+	Addpath /opt/vbroker/bin
+	AddLibraryPath /opt/vbroker/lib
+	AddLibraryPath /usr/local/libgcc
+	export VBROKERDIR=/opt/vbroker
+
+	#---- snmp ----
+	SNMPDIR=$SW_HOME/3rdparty/snmpsri15.1.0.3/sol
+	SR_MGR_CONF_DIR=$SNMPDIR/config/mgr
+	SR_AGT_CONF_DIR=$SNMPDIR/config/agt
+	SR_TRAP_TEST_PORT=8899
+	SR_SNMP_TEST_PORT=8898
+	export SR_MGR_CONF_DIR SR_AGT_CONF_DIR SR_TRAP_TEST_PORT SR_SNMP_TEST_PORT 
+ 
+	#Aliases
+	alias cc='/opt/forte62/SUNWspro/bin/cc'
+fi
+
+####################  NOOS  ###################
+if [ "$1" = "kab_noos_provisioning" ]
+then
+	echo "NOOS project"
+	Addpath .
+	# x25 librarie
+	AddLibraryPath /opt/SUNWconn/lib
+fi
+
+#################### psi_cartridges ###################
+if [ "$1" = "psi_cartridges" ]
+then
+	echo "NOOS project[psi_cartridges]"
+	export ODBCINI=/import/home/vdesabou/NOOS/odbc.ini
+	# $ORACLE_HOME used only for sqlplus command
+	export ORACLE_HOME=/opt/oracle/8i
+fi
+
+#################### NAI ##################
+if [ "$1" = "ognNAI3UK" ]
+then
+	echo "NAI 3UK"
+	alias kps='$SW_HOME/distrib/kabira/projectservice/scripts/projectservice'
+
+	Addpath $SW_HOME/distrib/kabira/scripts
+	Addpath $SW_HOME/distrib/kabira/bin
+	Addpath $SW_HOME/distrib/kabira/devbin
+	Addpath $SW_HOME/distrib/kabira/projectservice/scripts
+	Addpath $SW_HOME/distrib/kabira/kts/scripts
+
+	AddLibraryPath /opt/kabira/3rdparty/sol/tibco/7.5.4/lib
+fi
+
+#################### ODO ##################
+if [ "$1" = "ogn_odo_kpsa_src" ]
+then
+	echo "ODO KPSA"
+
+	export ORACLE_SID=DB10G264.KABIRA.FR
+	export ORACLE_HOME=/opt/oracle/10g2_64
+
+	export SDD_BIN=$ORACLE_HOME/bin
+	export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+	Addpath .
+
+	AddLibraryPath /opt/kabira/users/ogn_odo_kpsa_src/3rdparty/sol/odbc/51_64/lib
+        AddLibraryPath $ORACLE_HOME/lib
+fi
+
+#################### PAF551 ##################
+if [ "$1" = "ognPAF551" ]
+then
+        echo "ognPAF551"
+
+	export ODBCINI=/opt/kabira/users/ognPAF551/DBPOC/odbc.ini
+        export ORACLE_SID=DB10G264.KABIRA.FR
+        export ORACLE_HOME=/opt/oracle/10g2_64
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath /opt/kabira/users/ognPAF551/3rdparty/sol/odbc/51_64/lib
+        AddLibraryPath $ORACLE_HOME/lib
+fi
+
+
+################## Fastrack 315
+if [ "$1" = "ognFTKPSA315" ]
+then
+	export ORACLE_SID=db9i2.kabira.fr
+	export ORACLE_HOME=/opt/oracle/9i
+
+	export SDD_BIN=$ORACLE_HOME/bin
+	export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath .
+	Addpath $ORACLE_HOME/bin
+fi
+
+############ ognJAF562
+if [ "$1" = "ognJAF562" ]
+then
+	unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+	Addpath $JAVA_HOME/bin
+fi
+
+############ ognJAF56
+if [ "$1" = "ognJAF56" ]
+then
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+	alias javac='$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64/bin/javac'
+fi
+
+if [ "$1" = "ognJAF56_works" ]
+then
+    unset JAVA_HOME
+#	export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+#    CLASSPATH=.:$JAVA_HOME/lib
+#	export INSTALL4J_JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64/jre
+
+        export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64
+	CLASSPATH=.:$JAVA_HOME/lib
+        export INSTALL4J_JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64/jre
+
+
+
+    Addpath $JAVA_HOME/bin
+
+       # alias javac='$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64/bin/javac'
+        alias javac='$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64/bin/javac'
+fi
+
+
+############ ognJAF56_SW3P
+if [ "$1" = "ognJAF56_SW3P" ]
+then
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64
+	export RMI_IIOP_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64/rmi-iiop
+	
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+        alias javac='$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64/bin/javac'
+fi
+
+############ ognJAF56_Mike
+if [ "$1" = "ognJAF56_Mike" ]
+then
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64
+        export RMI_IIOP_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64/rmi-iiop
+
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+        alias javac='$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64/bin/javac'
+fi
+
+if [ "$1" = "ognKPSA316" ]
+then
+	unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+	Addpath $JAVA_HOME/bin
+
+	alias javac='$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64/bin/javac'
+fi
+
+
+###########ognMFTPS72
+if [ "$1" = "ognMFTPS72" ]
+then
+	export CFROOT=$SW_HOME
+	Addpath $CFROOT
+	AddLibraryPath $CFROOT/libs
+fi
+
+###########ognMFTPS72HF3
+if [ "$1" = "ognMFTPS72HF3" ]
+then
+        export CFROOT=$SW_HOME
+        Addpath $CFROOT
+        AddLibraryPath $CFROOT/libs
+fi
+
+###########ognMFTPS72HF5
+if [ "$1" = "ognMFTPS72HF5" ]
+then
+        export CFROOT=$SW_HOME
+        Addpath $CFROOT
+        AddLibraryPath $CFROOT/libs
+fi
+
+
+############ ognKTP352
+if [ "$1" = "ognKTP352" ]
+then
+	Addpath /usr/bin
+
+	Addpath $SW_HOME/distrib/kabira/scripts
+	Addpath $SW_HOME/distrib/kabira/kts/scripts
+	Addpath $SW_HOME/distrib/kabira/bin
+	Addpath $SW_HOME/distrib/kabira/projectservice/scripts
+
+	alias kps='$SW_HOME/distrib/kabira/projectservice/scripts/projectservice'
+
+fi
+
+if [ "$1" = "ognBSKYB_KTP3512" ]
+then
+    Addpath /usr/bin
+
+    Addpath $SW_HOME/distrib/kabira/scripts
+    Addpath $SW_HOME/distrib/kabira/kts/scripts
+    Addpath $SW_HOME/distrib/kabira/bin
+    Addpath $SW_HOME/distrib/kabira/projectservice/scripts
+
+    alias kps='$SW_HOME/distrib/kabira/projectservice/scripts/projectservice'
+
+fi
+
+##########ognKPSA33MBL_1
+if [ "$1" = "ognKPSA33MBL_1" ]
+then
+    unset JAVA_HOME
+    export ANT_HOME=$SW_HOME/3rdparty/generic/ant/1.6.5/apache-ant-1.6.5
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+    export CLASSPATH=.:$JAVA_HOME/lib:$JAVA_HOME/jre/lib:$ANT_HOME/lib:$SW_HOME/cart_alcatel_nghlr/alcatelnghlrcca/generic/lib
+
+    Addpath $ANT_HOME/bin
+    Addpath $JAVA_HOME/bin
+fi
+
+##########ognKPSA33MBL
+if [ "$1" = "ognKPSA33MBL" ]
+then 
+    unset JAVA_HOME
+	export ANT_HOME=$SW_HOME/3rdparty/generic/ant/1.6.5/apache-ant-1.6.5
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+	export CLASSPATH=.:$JAVA_HOME/lib:$JAVA_HOME/jre/lib:$ANT_HOME/lib:$SW_HOME/cart_alcatel_nghlr/alcatelnghlrcca/generic/lib
+
+    Addpath $ANT_HOME/bin
+    Addpath $JAVA_HOME/bin
+fi
+
+#####################ogn PAF56 ##############
+if [ "$1" = "ognKPSA352" ]
+then
+        export ORACLE_SID=DB10G264.KABIRA.FR
+        export ORACLE_HOME=/opt/oracle/10g2_64
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA352/3rdparty/sol/odbc/53sp2_64/lib
+
+fi
+
+if [ "$1" = "ognKPSA351" ]
+then
+        export ORACLE_SID=DB10G264.KABIRA.FR
+        export ORACLE_HOME=/opt/oracle/10g2_64
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA351/3rdparty/sol/odbc/53sp2_64/lib
+
+fi
+
+if [ "$1" = "ognKPSA353" ]
+then
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA353BYTEL/3rdparty/sol/odbc/53sp2_64/lib
+fi
+
+
+if [ "$1" = "ognKPSA370S" ]
+then
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	export ODBCINI=/opt/kabira/users/ognKPSA370S/runtime_1-ENQJHH/conf/odbc.ini
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        #AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA370S/3rdparty/sol/odbc/60sp1_64/lib
+fi
+
+if [ "$1" = "ognKPSA370HF3S" ]
+then
+		export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+		export SDD_BIN=$ORACLE_HOME/bin
+		export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+		export ODBCINI=/opt/kabira/users/ognKPSA370HF3S/runtime_KPSA4384/confbytel/odbc.ini
+
+        export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+       Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+
+		Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA370HF3S/3rdparty/sol/odbc/60sp1_64/lib
+fi
+
+if [ "$1" = "ognKPSA370HF0_to_HF3" ]
+then
+                export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+                export SDD_BIN=$ORACLE_HOME/bin
+                export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+                export ODBCINI=/opt/kabira/users/ognKPSA370HF0_to_HF3/runtime_KPSA4384/confbytel/odbc.ini
+
+        export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+       Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+
+                Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA370HF0_to_HF3/3rdparty/sol/odbc/60sp1_64/lib
+fi
+
+
+if [ "$1" = "ognKPSA370HF0" ]
+then
+        export ORACLE_SID=DB10G264
+       export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+       export SDD_BIN=$ORACLE_HOME/bin
+      export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        export ODBCINI=/opt/kabira/users/ognKPSA370HF3S/runtime_KPSA4384/confbytel/odbc.ini
+        export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+       Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+        Addpath .
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA370HF3S/3rdparty/sol/odbc/60sp1_64/lib		
+fi
+
+if [ "$1" = "ognKPSA370HF1" ]
+then
+        export ORACLE_SID=DB10G264
+	       export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+			           
+          export SDD_BIN=$ORACLE_HOME/bin
+export TNS_ADMIN=$ORACLE_HOME/network/admin
+						                                
+export ODBCINI=/opt/kabira/users/ognKPSA370HF3S/runtime_KPSA4384/confbytel/odbc.ini
+      export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+			       Addpath $ORACLE_HOME
+			        Addpath $ORACLE_HOME/bin
+       Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+       Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+     Addpath .
+   AddLibraryPath $ORACLE_HOME/lib
+       AddLibraryPath /opt/kabira/users/ognKPSA370HF3S/3rdparty/sol/odbc/60sp1_64/lib
+fi
+
+if [ "$1" = "ognFP381PNODE" ]
+then
+        export ORACLE_SID=DB11G264
+        #export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.2_64/app/oracle/product/11.2.0/client_1
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+        Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_64/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/lib
+fi
+
+if [ "$1" = "ognFP381HF1_OSK" ]
+then
+        export ORACLE_SID=DB11G264
+		export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.2_x86_64
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+        Addpath $SW_HOME/3rdparty/linux/php/5.3.21_x86_64/bin
+        Addpath $SW_HOME/3rdparty/linux/postgresql/9.2.1_x86_64/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME
+
+        AddLibraryPath $ORACLE_HOME/lib
+	    AddLibraryPath $SW_HOME/3rdparty/linux/odbc/60sp1_x86_64/lib
+	    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+
+        AddLibraryPath $SW_HOME/3rdparty/linux/postgresql/9.2.1_x86_64/lib
+fi
+
+if [ "$1" = "ognFP381LB" ]
+then
+        export ORACLE_SID=DB11G264
+        #export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.2_64/app/oracle/product/11.2.0/client_1
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+        Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_64/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/lib
+fi
+
+if [ "$1" = "ognFP381BYTEL" ]
+then
+        export ORACLE_SID=DB11G264
+        #export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+        export ORACLE_HOME=$SW_HOME/3rdparty/sol/oracle/11.2_64/app/oracle/product/11.2.0/client_1
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+	export ODBCINI=/import/home/ogermain/odbc.ini
+
+        export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+		export LANG=en_US
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+        Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME
+
+        AddLibraryPath $ORACLE_HOME/lib
+        #AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_64/lib
+		#AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp3_64/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/71sp5_64/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/lib
+fi
+
+if [ "$1" = "ognFP381BYTEL2" ]
+then
+
+        export ORACLE_SID=DB11G264
+        #export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+        export ORACLE_HOME=$SW_HOME/3rdparty/sol/oracle/11.2_64/app/oracle/product/11.2.0/client_1
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+	export ODBCINI=/opt/kabira/users/ognFP381BYTEL2/runtime_odbc/conf/odbc.ini
+	export LANG=en_US
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME
+
+        AddLibraryPath $ORACLE_HOME/lib
+
+	LD_LIBRARY_PATH=$SW_HOME/3rdparty/sol/odbc/80_64:$LD_LIBRARY_PATH
+	export LD_LIBRARY_PATH
+
+fi
+
+
+
+if [ "$1" = "ognFP380HF1S" ]
+then
+        export ORACLE_SID=DB11G264
+        #export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.2_64/app/oracle/product/11.2.0/client_1
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+        Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_64/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/lib
+fi
+
+if [ "$1" = "ognFP380HF2S" ]
+then
+        export ORACLE_SID=DB11G264
+        #export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.2_64/app/oracle/product/11.2.0/client_1
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+	export JAVA_HOME=/opt/kabira/3rdparty/sol/jdk/1.7.0_21_64
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+        Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_64/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/lib
+fi
+
+if [ "$1" = "ognFP380BSCS" ]
+then
+        export ORACLE_SID=DB11G264
+        #export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.2_64/app/oracle/product/11.2.0/client_1
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+        export JAVA_HOME=/opt/kabira/3rdparty/sol/jdk/1.7.0_21_64
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+        Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_64/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/lib
+fi
+
+
+if [ "$1" = "ognFP380S" ]
+then
+        export ORACLE_SID=DB11G264
+        #export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.2_64/app/oracle/product/11.2.0/client_1
+        #export ORACLE_HOME=/opt/oracle/app/oracle/product/11.2.0/client_1
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+        Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_64/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/lib
+fi
+
+if [ "$1" = "ognKPSA380TIB_mysql" ]
+then
+        export ORACLE_SID=DB11G264
+        #export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.2_64
+        #export ORACLE_HOME=/opt/oracle/app/oracle/product/11.2.0/client_1
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+        Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_64/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/lib
+fi
+
+if [ "$1" = "ognKPSA380" ]
+then
+        export ORACLE_SID=DB10G264
+        #export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.2_64
+        #export ORACLE_HOME=/opt/oracle/app/oracle/product/11.2.0/client_1
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+	Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        Addpath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/bin
+	Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_64/lib
+	AddLibraryPath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/lib
+fi
+
+if [ "$1" = "ognKPSA370TIB" ]
+then
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA370TIB/3rdparty/sol/odbc/53sp2_64/lib
+
+	unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+	export TIBCO_HOME=$SW_HOME/tibco
+	
+fi
+
+#ognKPSA370_test
+if [ "$1" = "ognKPSA370_test" ]
+then
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA370TIB/3rdparty/sol/odbc/53sp2_64/lib
+
+        unset JAVA_HOME
+        export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+        CLASSPATH=.:$JAVA_HOME/lib
+
+        export TIBCO_HOME=$SW_HOME/tibco
+
+fi
+
+if [ "$1" = "ognKPSA370_testL" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    #AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+
+    unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+	export TIBCO_HOME=$SW_HOME/tibco
+		
+fi
+
+if [ "$1" = "ognKTP357_NAIQM" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+    alias javac='$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64/bin/javac'
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+	Addpath /usr/bin
+
+	Addpath $SW_HOME/distrib/kabira/scripts
+	Addpath $SW_HOME/distrib/kabira/kts/scripts
+	Addpath $SW_HOME/distrib/kabira/bin
+	Addpath $SW_HOME/distrib/kabira/projectservice/scripts
+
+	alias kps='$SW_HOME/distrib/kabira/projectservice/scripts/projectservice'
+
+fi
+
+
+if [ "$1" = "ognKPSA356TMMK" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+fi
+
+if [ "$1" = "ognKPSA356TMMK_3" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+fi
+
+if [ "$1" = "ognKPSA360L" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+	AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+
+    unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognKPSA370L" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+	export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/1.0.0d_x86_64
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $OPENSSL/lib
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognKPSA370L_cafok" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+        export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/1.0.0d_x86_64
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $OPENSSL/lib
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+
+if [ "$1" = "ognKPSA380L" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+	export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/1.0.0d_x86_64
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $OPENSSL/lib
+    AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_x8664/lib
+
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognFP81" ]
+then
+    export ORACLE_SID=DB11G264
+    export ORACLE_HOME=$SW_HOME/3rdparty/linux/oracle/12.2.0.1/client_1
+    Addpath $ORACLE_HOME
+
+	 export MYSQL_HOME=$SW_HOME/3rdparty/linux/mysql/5.1.20_x86_64
+	Addpath $MYSQL_HOME/bin
+
+	Addpath $SW_HOME/3rdparty/linux/postgresql/9.4.14_x86_64/bin
+
+    AddLibraryPath $ORACLE_HOME/
+    AddLibraryPath $ORACLE_HOME/lib
+	AddLibraryPath $MYSQL_HOME/lib
+
+	AddLibraryPath /opt/kabira/3rdparty/linux/odbc/60sp1_x86_64
+	AddLibraryPath /opt/kabira/3rdparty/linux/odbc/60sp1_x86_64/lib
+	#AddLibraryPath $SW_HOME/3rdparty/linux/odbc/60sp1_x86_64/lib
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+	#AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+	AddLibraryPath $SW_HOME/3rdparty/linux/postgresql/9.4.14_x86_64/lib
+
+	unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.8.0_25_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+	Addpath $JAVA_HOME/bin
+
+	unset LANG
+	export LANG=en_US
+
+	unset ODBCINI
+	export ODBCINI=$SW_HOME/runtime_odbc/conf/odbc.ini
+fi
+
+if [ "$1" = "ognFP390x" ]
+then
+    export ORACLE_SID=DB11G264
+    #export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64
+    #export ORACLE_HOME=$SW_HOME/3rdparty/linux/oracle/11.2_x86_64
+	#export ORACLE_HOME=$SW_HOME/3rdparty/linux/oracle/12.1.0.2_x86_64
+    #export ORACLE_HOME=$SW_HOME/3rdparty/linux/oracle/12.2.0.1_x86_64/client_1
+    export ORACLE_HOME=$SW_HOME/3rdparty/linux/oracle/11.2.0.4_x86_64
+
+    export SDD_BIN=$ORACLE_HOME
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+
+    #Addpath $ORACLE_HOME
+    Addpath $ORACLE_HOME/bin
+
+	 export MYSQL_HOME=$SW_HOME/3rdparty/linux/mysql/5.1.20_x86_64
+	Addpath $MYSQL_HOME/bin
+
+	Addpath $SW_HOME/3rdparty/linux/postgresql/9.4.14_x86_64/bin
+
+    AddLibraryPath $ORACLE_HOME/lib
+	AddLibraryPath $MYSQL_HOME/lib
+
+	#AddLibraryPath /opt/kabira/3rdparty/linux/odbc/60sp1_x86_64
+	#AddLibraryPath /opt/kabira/3rdparty/linux/odbc/60sp1_x86_64/lib
+	#AddLibraryPath $SW_HOME/3rdparty/linux/odbc/60sp1_x86_64/lib
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+	#AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+	AddLibraryPath $SW_HOME/3rdparty/linux/postgresql/9.4.14_x86_64/lib
+
+	unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.8.0_25_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+	Addpath $JAVA_HOME/bin
+
+	unset LANG
+	export LANG=en_US
+
+	unset ODBCINI
+	export ODBCINI=$SW_HOME/runtime_odbc/conf/odbc.ini
+fi
+
+if [ "$1" = "ognFP390New" ]
+then
+    export ORACLE_SID=DB11G264
+    #export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64
+    export ORACLE_HOME=$SW_HOME/3rdparty/linux/oracle/11.2_x86_64
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+    Addpath $ORACLE_HOME/bin
+
+    export MYSQL_HOME=$SW_HOME/3rdparty/linux/mysql/5.1.20_x86_64
+    Addpath $MYSQL_HOME/bin
+
+
+	Addpath $SW_HOME//3rdparty/linux/postgresql/9.4.14_x86_64/bin
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath $MYSQL_HOME/lib
+
+    AddLibraryPath /opt/kabira/3rdparty/linux/odbc/60sp1_x86_64
+    AddLibraryPath /opt/kabira/3rdparty/linux/odbc/60sp1_x86_64/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/odbc/60sp1_x86_64/lib
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+    AddLibraryPath $SW_HOME/3rdparty/linux/postgresql/9.4.14_x86_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.8.0_25_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+    Addpath $JAVA_HOME/bin
+
+    unset LANG
+    export LANG=en_US
+
+    unset ODBCINI
+    export ODBCINI=$SW_HOME/runtime_odbc/conf/odbc.ini
+fi
+
+if [ "$1" = "ognFP380HF1L" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/1.0.0d_x86_64
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+    Addpath $ORACLE_HOME/bin
+	Addpath .
+    AddLibraryPath $OPENSSL/lib
+    AddLibraryPath $ORACLE_HOME/lib
+	AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_x8664/lib
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+	#AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+	unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+	Addpath $JAVA_HOME/bin
+fi
+
+if [ "$1" = "ognFP380HF1" ]
+then
+    export ORACLE_SID=DB11G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.2_x86_64
+    #export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/1.0.0d_x86_64
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $OPENSSL/lib
+   AddLibraryPath $ORACLE_HOME/lib
+   AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_x8664/lib
+
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognFP380HF2L" ]
+then
+    export ORACLE_SID=DB11G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.2_x86_64
+    #export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+   export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/1.0.0d_x86_64
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+   Addpath $ORACLE_HOME/bin
+    Addpath .
+   AddLibraryPath $OPENSSL/lib
+   AddLibraryPath $ORACLE_HOME/lib
+     AddLibraryPath $SW_HOME/3rdparty/linux/odbc/60sp1_x86_64/lib
+     AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+     #AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+	 unset JAVA_HOME
+	 export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.7.0_25_x86_64
+     CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognFP381HF1" ]
+then
+    #export ORACLE_HOME=$SW_HOME/3rdparty/linux/oracle/11.2_x86_64
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+    export ORACLE_SID=DB11G264
+	export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/1.0.0d_x86_64
+	export SDD_BIN=$ORACLE_HOME/bin
+	export TNS_ADMIN=$ORACLE_HOME/network/admin
+	Addpath $ORACLE_HOME/bin
+	Addpath .
+	AddLibraryPath $OPENSSL/lib
+	AddLibraryPath $ORACLE_HOME/lib
+	AddLibraryPath $SW_HOME/3rdparty/linux/odbc/60sp1_x86_64/lib
+	AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+	#AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+	unset JAVA_HOME
+	#export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.7.0_25_x86_64
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.8.0_25_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+	export PATH=$JAVA_HOME/bin:$PATH
+	#Addpath $JAVA_HOME/bin
+
+fi
+
+
+if [ "$1" = "ognFP381L" ]
+then
+    export ORACLE_SID=DB11G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.2_x86_64
+   export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/1.0.0d_x86_64
+	export SDD_BIN=$ORACLE_HOME/bin
+	export TNS_ADMIN=$ORACLE_HOME/network/admin
+	Addpath $ORACLE_HOME/bin
+	Addpath .
+	AddLibraryPath $OPENSSL/lib
+	AddLibraryPath $ORACLE_HOME/lib
+	AddLibraryPath $SW_HOME/3rdparty/linux/odbc/60sp1_x86_64/lib
+	AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+	#AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+	unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.7.0_25_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+	Addpath $JAVA_HOME/bin
+
+fi
+
+
+if [ "$1" = "ognFP380HF2_SFR" ]
+	then
+    export ORACLE_SID=DB11G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.2_x86_64
+    #export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+   export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/1.0.0d_x86_64
+      export SDD_BIN=$ORACLE_HOME/bin
+     export TNS_ADMIN=$ORACLE_HOME/network/admin
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+   AddLibraryPath $OPENSSL/lib
+   AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath $SW_HOME/3rdparty/sol/odbc/60sp1_x8664/lib
+   AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+     #AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+	    unset JAVA_HOME
+#	    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.7.0_25_x86_64
+     CLASSPATH=.:$JAVA_HOME/lib
+
+     Addpath $JAVA_HOME/bin
+
+  fi
+
+
+
+if [ "$1" = "ognKPSA370HF3" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export OPENSSL=$SW_HOME/3rdparty/$SW_PLATFORM/openssl/1.0.0d_x86_64
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath .
+
+
+	export MYSQL_HOME=$SW_HOME/3rdparty/sol/mysql/5.1.20_64
+
+        Addpath $ORACLE_HOME
+        Addpath $ORACLE_HOME/bin
+        Addpath $SW_HOME/3rdparty/sol/php/5.3.21_64/bin
+        #Addpath $SW_HOME/3rdparty/sol/postgresql/9.2.1_64/bin
+        Addpath $SW_HOME/3rdparty/sol/mysql/5.1.20_64/bin
+
+
+    AddLibraryPath $OPENSSL/lib
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+
+if [ "$1" = "ognKPSA370" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/libxslt/1.1.26_x86_64/lib
+
+    unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognKPSA358_1" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath $SW_HOME/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+	export TECH_PARAM_LOG=$SW_HOME/runtime
+export TECH_PARAM_DATA=$SW_HOME/runtime
+export TECH_PARAM_SAVE=$SW_HOME/runtime/saveft
+export TECH_PARAM_FAIL=$SW_HOME/runtime/failft
+export TECH_PARAM_COMP_PATH=$SW_HOME/distrib/kabira/kpsa/component
+
+export SW_APPLI_HOME=$SW_HOME/runtime
+export SW_NODE=anvers
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+fi
+
+
+if [ "$1" = "ognKPSA358L" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_12_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+fi
+
+
+
+if [ "$1" = "ognKPSA36OAM" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    #AddLibraryPath $ORACLE_HOME/lib
+    #AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+	AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+fi
+
+if [ "$1" = "ognKPSA36OAM101" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    #AddLibraryPath $ORACLE_HOME/lib
+    #AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+fi
+
+if [ "$1" = "ognKPSA36OAM102" ]
+then
+	export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    #AddLibraryPath $ORACLE_HOME/lib
+    #AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+fi
+
+if [ "$1" = "ognKPSA36OAM101_to_102" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    #AddLibraryPath $ORACLE_HOME/lib
+    #AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+fi
+
+
+if [ "$1" = "ognKPSA37OAM" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    #AddLibraryPath $ORACLE_HOME/lib
+    #AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+fi
+
+if [ "$1" = "ognKPSA37OAM111" ]
+	then
+	    export ORACLE_SID=DB10G264
+		export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+	    export SDD_BIN=$ORACLE_HOME/bin
+	    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	    Addpath $ORACLE_HOME/bin
+	    Addpath .
+
+		#AddLibraryPath $ORACLE_HOME/lib
+		#AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+	    unset JAVA_HOME
+	    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+	    CLASSPATH=.:$JAVA_HOME/lib
+
+	    Addpath $JAVA_HOME/bin
+
+	    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+fi
+
+if [ "$1" = "ognKPSA37OAM111_bis" ]
+    then
+		export ORACLE_SID=DB10G264
+		export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+		export SDD_BIN=$ORACLE_HOME/bin
+		export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+		Addpath $ORACLE_HOME/bin
+		Addpath .
+
+		#AddLibraryPath $ORACLE_HOME/lib
+		#AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+		unset JAVA_HOME
+		export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+		CLASSPATH=.:$JAVA_HOME/lib
+
+		Addpath $JAVA_HOME/bin
+		AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+fi
+
+
+if [ "$1" = "ognKPSA36OAM100" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    #AddLibraryPath $ORACLE_HOME/lib
+    #AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+	Addpath $JAVA_HOME/bin
+
+	AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+fi
+if [ "$1" = "ognKPSA370HF2TIB" ]
+then
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.6.0_30_x86_64
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	export ODBCINI=/opt/kabira/users/ognKPSA370HF2TIB/runtime_1-ENQJHH/conf/odbc.ini
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+	AddLibraryPath /opt/kabira/users/ognKPSA370L/3rdparty/linux/odbc/60sp1_x86_64/lib
+fi
+
+if [ "$1" = "ognKPSA37OAM" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    #AddLibraryPath $ORACLE_HOME/lib
+    #AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+    unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+	AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+fi
+
+if [ "$1" = "ognKPSA37OAM_1" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    #AddLibraryPath $ORACLE_HOME/lib
+    #AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+
+   unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+    Addpath $JAVA_HOME/bin
+
+    AddLibraryPath $SW_HOME/3rdparty/linux/libgcrypt/1.4.6_x86_64/lib
+fi
+
+if [ "$1" = "ognAFF120" ]
+then
+
+	unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.6.0_30_x86_64
+
+	Addpath $JAVA_HOME/bin
+	CLASSPATH=.:$JAVA_HOME/lib
+
+	export NLS_LANG=AMERICAN_AMERICA.UTF8
+	export LANG=en_US.utf8
+
+	export RV_VERSION=8.3
+	export BW_VERSION=5.9
+	export BE_VERSION=3.0
+	export ADMIN_VERSION=5.7
+	export HAWK_VERSION=4.9
+	export AF_VERSION=1.2
+	export EMS_VERSION=6.0
+	export CIM_VERSION=8.1
+
+	export TIBCO_HOME=$SW_HOME/tibco
+	export AF_HOME=$TIBCO_HOME/af/$AF_VERSION
+	export AF_CONFIG_HOME=$AF_HOME/config
+	export AF_TRA_HOME=$TIBCO_HOME/tra/$ADMIN_VERSION/bin
+
+	export ANT_HOME=$SW_HOME/ant/apache-ant-1.8.2
+	export NODE_ID=Member1
+
+	export TRA_HOME=$TIBCO_HOME/tra/$ADMIN_VERSION
+	export TIBCO_TRA_HOME=$TIBCO_HOME/tra/$ADMIN_VERSION
+
+	export TIBCO_HAWK_HOME=$TIBCO_HOME/hawk/$HAWK_VERSION
+	export HAWK_INSTALL=$TIBCO_HOME/hawk/$HAWK_VERSION
+	export HAWK_HOME=$TIBCO_HOME/hawk/$HAWK_VERSION
+	export HAWK_ROOT=$TIBCO_HOME/hawk/$HAWK_VERSION
+
+	export RV_HOME=$TIBCO_HOME/tibrv/$RV_VERSION
+	export TPCL_HOME=$TIBCO_HOME/tpcl/$ADMIN_VERSION
+
+	export EMS_HOME=$TIBCO_HOME/ems/$EMS_VERSION
+	export AF_OMS_CONTEXT_URL=http://avron:8085/omsServer
+
+	export MQ_HOME=$TIBCO_HOME/cim/$CIM_VERSION
+	export AS_HOME=$MQ_HOME/bin/as
+	export MQ_LOG=$MQ_HOME/log
+	export MQ_COMMON_DIR=$MQ_HOME/common
+	export MQ_CONFIG_FILE=$MQ_HOME/config/ConfigValues.xml
+
+	export LD_ASSUME_KERNEL
+
+	export JBOSS_HOME=$TIBCO_HOME/jboss-5.1.0.GA
+	export NODE_ID=Member1
+
+	export BE_HOME=$TIBCO_HOME/be/$BE_VERSION
+
+	export AC_HOME=$MQ_HOME/plugins/ac/$AF_VERSION
+
+	Addpath $ANT_HOME/bin
+	Addpath $EMS_HOME/bin
+	Addpath $TRA_HOME/bin
+	Addpath $RV_HOME/bin
+	Addpath $BW_HOME/bin
+	Addpath $AWK_HOME/bin
+	Addpath $MQ_HOME/bin
+	Addpath $AS_HOME/bin
+
+    AddLibraryPath $RV_HOME/lib
+    AddLibraryPath $TRA_HOME/lib
+
+	#Oracle JDBC patch config
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=$SW_HOME/oracle_11.1.0.6.0_x86_64/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath $ORACLE_HOME/jdbc/lib
+    AddLibraryPath $ORACLE_HOME/sqldeveloper/jdbc/lib
+
+	#CLASSPATH=$CLASSPATH:$ANT_HOME/lib:$HAWK_HOME/lib:$TRA_HOME/lib:$RV_HOME/lib:$TPCL_HOME/lib:$ORACLE_HOME/sqldeveloper/jdbc/lib/ojdbc14.jar
+	CLASSPATH=$CLASSPATH:$ANT_HOME/lib:$HAWK_HOME/lib:$TRA_HOME/lib:$RV_HOME/lib:$TPCL_HOME/lib:$ORACLE_HOME/jdbc/lib/ojdbc6jar:$AF_HOME/lib:$AF_HOME/apache-tomcat-7.0.6/lib
+	export CLASSPATH
+
+fi
+
+if [ "$1" = "ognFOM21" ]
+then
+
+	unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.7.0_25_x86_64
+
+	Addpath $JAVA_HOME/bin
+	CLASSPATH=.:$JAVA_HOME/lib
+
+	export NLS_LANG=AMERICAN_AMERICA.UTF8
+	export LANG=en_US.utf8
+
+	export RV_VERSION=8.3
+	export BW_VERSION=5.9.3
+	export BE_VERSION=3.0
+	export ADMIN_VERSION=5.7
+	export HAWK_VERSION=4.9
+	
+	export AC_VERSION=2.1
+	export AS_VERSION=2.1
+	export AF_VERSION=2.1
+	export EMS_VERSION=7.0
+	export CIM_VERSION=8.2
+
+	#FOM
+	#export TIBCO_HOME=$SW_HOME/tibco
+	export TIBCO_HOME=$SW_HOME
+	export AF_HOME=$TIBCO_HOME/af/$AF_VERSION
+	export AF_CONFIG_HOME=$AF_HOME/config
+	export AF_TRA_HOME=$TIBCO_HOME/tra/$ADMIN_VERSION/bin
+
+	export ANT_HOME=$SW_HOME/apache-ant-1.8.4
+	export NODE_ID=Member1
+
+	export TRA_HOME=$TIBCO_HOME/tra/$ADMIN_VERSION
+	export TIBCO_TRA_HOME=$TIBCO_HOME/tra/$ADMIN_VERSION
+
+	export TIBCO_HAWK_HOME=$TIBCO_HOME/hawk/$HAWK_VERSION
+	export HAWK_INSTALL=$TIBCO_HOME/hawk/$HAWK_VERSION
+	export HAWK_HOME=$TIBCO_HOME/hawk/$HAWK_VERSION
+	export HAWK_ROOT=$TIBCO_HOME/hawk/$HAWK_VERSION
+
+	export RV_HOME=$TIBCO_HOME/tibrv/$RV_VERSION
+	export TPCL_HOME=$TIBCO_HOME/tpcl/$ADMIN_VERSION
+
+	export EMS_HOME=$TIBCO_HOME/ems/$EMS_VERSION
+	export AF_OMS_CONTEXT_URL=http://avron:8085/omsServer
+
+	export MQ_HOME=$TIBCO_HOME/cim/$CIM_VERSION
+	export MQ_LOG=$MQ_HOME/log
+	export MQ_COMMON_DIR=$MQ_HOME/common
+	export MQ_CONFIG_FILE=$MQ_HOME/config/ConfigValues.xml
+
+	export AS_HOME=$MQ_HOME/bin/as
+	
+	export AC_HOME=$MQ_HOME/plugins/ac/$AC_VERSION
+	export LD_ASSUME_KERNEL
+
+	export JBOSS_HOME=$TIBCO_HOME/jboss-5.1.0.GA
+	export NODE_ID=Member1
+
+	export BE_HOME=$TIBCO_HOME/be/$BE_VERSION
+
+	Addpath $ANT_HOME/bin
+	Addpath $EMS_HOME/bin
+	Addpath $TRA_HOME/bin
+	Addpath $RV_HOME/bin
+	Addpath $BW_HOME/bin
+	Addpath $AWK_HOME/bin
+	Addpath $MQ_HOME/bin
+	Addpath $AS_HOME/bin
+
+    AddLibraryPath $RV_HOME/lib
+    AddLibraryPath $TRA_HOME/lib
+
+	#Oracle JDBC patch config
+    export ORACLE_SID=DB12G264
+    export ORACLE_HOME=$SW_HOME/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath $ORACLE_HOME/jdbc/lib
+    AddLibraryPath $ORACLE_HOME/sqldeveloper/jdbc/lib
+
+	#CLASSPATH=$CLASSPATH:$ANT_HOME/lib:$HAWK_HOME/lib:$TRA_HOME/lib:$RV_HOME/lib:$TPCL_HOME/lib:$ORACLE_HOME/sqldeveloper/jdbc/lib/ojdbc14.jar
+	CLASSPATH=$CLASSPATH:$ANT_HOME/lib:$HAWK_HOME/lib:$TRA_HOME/lib:$RV_HOME/lib:$TPCL_HOME/lib:$ORACLE_HOME/jdbc/lib/ojdbc6jar:$AF_HOME/lib:$AF_HOME/apache-tomcat-7.0.6/lib
+	export CLASSPATH
+
+fi
+
+
+if [ "$1" = "ognIAMKXDR3" ]
+then
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	export KXDR_IAMMediation=${SW_HOME}/SoxFlow
+	export ORAUSER=xav
+	export ORAPASSWD=xav
+
+	IMPORTPATH=${SW_HOME}/distrib/kabira/kxdr/export
+	IMPORTPATH=${SW_HOME}/distrib/kabira/kxdr/component/:${IMPORTPATH}
+	IMPORTPATH=${SW_HOME}/distrib/kabira/kpsa/component/:${IMPORTPATH}
+	export IMPORTPATH
+
+        Addpath $ORACLE_HOME/bin
+
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        #AddLibraryPath /opt/kabira/users/ognIAMKXDR3/3rdparty/sol/odbc/53sp2_64/lib
+        AddLibraryPath /opt/kabira/users/ognIAMKXDR3/3rdparty/sol/odbc/60sp1_64/lib
+fi
+
+if [ "$1" = "ognKXDR301" ]
+then
+    #export ORACLE_SID=DB10G264
+    export ORACLE_SID=db11g264
+    export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	export KXDR_IAMMediation=${SW_HOME}/iammediation/systemtest/sol/perf-GSM_N-0010
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+fi
+
+if [ "$1" = "ognODOXDR" ]
+then
+    #export ORACLE_SID=DB10G264
+    export ORACLE_SID=db11g264
+    export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    export KXDR_IAMMediation=${SW_HOME}/iammediation/systemtest/sol/perf-GSM_N-0010
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+fi
+
+
+if [ "$1" = "ognKPSA354S" ]
+then
+	export ORACLE_SID=DB10G264
+	export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+	export SDD_BIN=$ORACLE_HOME/bin
+	export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+	Addpath $ORACLE_HOME/bin
+	Addpath .
+
+	AddLibraryPath $ORACLE_HOME/lib
+	AddLibraryPath /opt/kabira/users/ognKPSA352/3rdparty/sol/odbc/53sp2_64/lib
+
+	unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+	CLASSPATH=.:$JAVA_HOME/lib
+fi
+
+if [ "$1" = "ognKPSA358S" ]
+then
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA352/3rdparty/sol/odbc/53sp2_64/lib
+   unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.4.2_10_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+fi
+
+
+if [ "$1" = "ognKPSA360S" ]
+then
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA352/3rdparty/sol/odbc/53sp2_64/lib
+fi
+
+
+if [ "$1" = "ognKPSA353BYTEL_PNODEL" ]
+then
+    export ORACLE_SID=DB10G264
+    export ORACLE_HOME=/opt/kabira/3rdparty/linux/oracle/11.1.0.6.0_x86_64/app/oracle/product/805
+
+    export SDD_BIN=$ORACLE_HOME/bin
+    export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+    Addpath $ORACLE_HOME/bin
+    Addpath .
+
+    AddLibraryPath $ORACLE_HOME/lib
+    AddLibraryPath /opt/kabira/users/ognKPSA356TMMK/3rdparty/linux/odbc/53sp2_x86_64/lib
+fi
+
+
+if [ "$1" = "ognKPSA353BYTEL_PNODE" ]
+then
+        #export ORACLE_SID=DB10G264.KABIRA.FR
+        #export ORACLE_HOME=/opt/oracle/10g2_64
+
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA352/3rdparty/sol/odbc/53sp2_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+    CLASSPATH=.:$JAVA_HOME/lib:$SW_HOME/webserv/webSim/classes
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognKPSA353BYTEL_2" ]
+then
+        #export ORACLE_SID=DB10G264.KABIRA.FR
+        #export ORACLE_HOME=/opt/oracle/10g2_64
+
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA352/3rdparty/sol/odbc/53sp2_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+    CLASSPATH=.:$JAVA_HOME/lib:$SW_HOME/webserv/webSim/classes
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognKPSA359S" ]
+then
+        #export ORACLE_SID=DB10G264.KABIRA.FR
+        #export ORACLE_HOME=/opt/oracle/10g2_64
+
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/53sp2_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+    CLASSPATH=.:$JAVA_HOME/lib:$SW_HOME/webserv/webSim/classes
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+
+if [ "$1" = "ognKPSA353BYTEL_1" ]
+then
+        #export ORACLE_SID=DB10G264.KABIRA.FR
+        #export ORACLE_HOME=/opt/oracle/10g2_64
+
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA352/3rdparty/sol/odbc/53sp2_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+    CLASSPATH=.:$JAVA_HOME/lib:$SW_HOME/webserv/webSim/classes
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognKPSA355" ]
+then
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/odbc/53sp2_64/lib
+
+	AddLibraryPath /usr/lib
+        AddLibraryPath $SW_HOME/3rdparty/sol/libxslt/1.1.12_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+    CLASSPATH=.:$JAVA_HOME/lib:$SW_HOME/webserv/webSim/classes
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognKTP353" ]
+then
+        Addpath /usr/bin
+
+        Addpath $SW_HOME/distrib/kabira/scripts
+        Addpath $SW_HOME/distrib/kabira/kts/scripts
+        Addpath $SW_HOME/distrib/kabira/bin
+        Addpath $SW_HOME/distrib/kabira/projectservice/scripts
+        Addpath /user/sfw/bin
+
+        export CATALINA_HOME=$SW_HOME/apache-tomcat-5.5.29
+        Addpath $CATALINA_HOME/bin
+
+        export PERLLIB=$SW_HOME/distrib/perllib/lib/perl5/site_perl
+
+        alias kps='$SW_HOME/distrib/kabira/projectservice/scripts/projectservice'
+
+        export ODBCINI=/opt/kabira/users/ognKTP3510_GLO/kis/distrib/odbc.ini
+
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKTP3510_GLO/3rdparty/sol/odbc/53_64/lib
+
+        AddLibraryPath /opt/kabira/users/3rdparty/sol/tibco/7.5.4/lib
+
+        unset JAVA_HOME
+        export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64
+        CLASSPATH=.:$JAVA_HOME/lib
+
+        Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognKTP3510_GLO" ]
+then
+        Addpath /usr/bin
+
+        Addpath $SW_HOME/distrib/kabira/scripts
+        Addpath $SW_HOME/distrib/kabira/kts/scripts
+        Addpath $SW_HOME/distrib/kabira/bin
+        Addpath $SW_HOME/distrib/kabira/projectservice/scripts
+	Addpath /user/sfw/bin
+
+	export CATALINA_HOME=$SW_HOME/apache-tomcat-5.5.29
+        Addpath $CATALINA_HOME/bin
+
+	export PERLLIB=$SW_HOME/distrib/perllib/lib/perl5/site_perl
+
+        alias kps='$SW_HOME/distrib/kabira/projectservice/scripts/projectservice'
+
+        export ODBCINI=/opt/kabira/users/ognKTP3510_GLO/kis/distrib/odbc.ini
+
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKTP3510_GLO/3rdparty/sol/odbc/53_64/lib
+
+	AddLibraryPath /opt/kabira/users/3rdparty/sol/tibco/7.5.4/lib
+
+	unset JAVA_HOME
+	export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+	Addpath $JAVA_HOME/bin
+
+fi
+
+if  [ "$1" = "ognKTP355" ]
+then
+        Addpath /usr/bin
+
+        Addpath $SW_HOME/distrib/kabira/scripts
+        Addpath $SW_HOME/distrib/kabira/kts/scripts
+        Addpath $SW_HOME/distrib/kabira/bin
+        Addpath $SW_HOME/distrib/kabira/projectservice/scripts
+
+        alias kps='$SW_HOME/distrib/kabira/projectservice/scripts/projectservice'
+
+        export ODBCINI=/opt/kabira/users/ognKTP355/KTP-424/odbc.ini
+
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKTP355/3rdparty/sol/odbc/53_64/lib
+
+	    unset JAVA_HOME
+	    export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+	    CLASSPATH=.:$JAVA_HOME/lib
+
+	    Addpath $JAVA_HOME/bin
+
+	    alias javac='$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64/bin/javac'
+
+fi
+
+if  [ "$1" = "ognkpsaperf358" ]
+then
+	export ODBCINI=/opt/kabira/users/ognkpsaperf358/KTP-424/odbc.ini
+
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+	AddLibraryPath /opt/kabira/users/ognkpsaperf358/3rdparty/sol/odbc/53_64/lib
+        AddLibraryPath /opt/kabira/users/ognkpsaperf358/3rdparty/sol/libxslt/1.1.12_64/lib
+fi
+
+if [ "$1" = "ognKPSA356" ]
+then
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805/
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA356/3rdparty/sol/odbc/53sp2_64/lib
+
+    unset JAVA_HOME
+    export JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.4.2_12_64
+    CLASSPATH=.:$JAVA_HOME/lib:$SW_HOME/webserv/webSim/classes
+
+    Addpath $JAVA_HOME/bin
+
+fi
+
+if [ "$1" = "ognOCAVMD" ]
+then
+        export ORACLE_SID=DB10G264
+        export ORACLE_HOME=/opt/kabira/3rdparty/sol/oracle/11.1.0.6.0_64/app/oracle/product/805
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+        AddLibraryPath /opt/kabira/users/ognKPSA352/3rdparty/sol/odbc/53sp2_64/lib
+fi
+
+
+if [ "$1" = "ognKPSA352L" ]
+then
+        export ORACLE_SID=DB10G264.KABIRA.FR
+        export ORACLE_HOME=/opt/oracle/10g2_64
+
+        export SDD_BIN=$ORACLE_HOME/bin
+       export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+       Addpath $ORACLE_HOME/bin
+       Addpath .
+
+       AddLibraryPath $ORACLE_HOME/lib
+      AddLibraryPath /opt/kabira/users/ognKPSA352/3rdparty/linux/odbc/53sp2_64/lib
+
+fi
+
+if [ "$1" = "ognAST210" ]
+then
+	  unset LD_LIBRARY_PATH
+	  Addpath $SW_HOME/3rdparty/linux/tibas/1.1.1/bin
+      AddLibraryPath $SW_HOME/3rdparty/linux/tibas/1.1.1/lib
+fi
+
+if [ "$1" = "ognAST202" ]
+then
+    Addpath $SW_HOME/3rdparty/linux/tibas/1.1.1/bin
+
+    unset LD_LIBRARY_PATH
+    AddLibraryPath $SW_HOME/distrib/kabira/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/apache/2.2.21_ssl_x86_64/lib
+    #AddLibraryPath /lib64
+    AddLibraryPath $SW_HOME/3rdparty/linux/tibas/1.1.1/lib
+
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.6.0_30_x86_64
+
+	export PATH=$JAVA_HOME/bin:$PATH
+
+    CLASSPATH=.:$JAVA_HOME/lib:$SW_HOME/FEP1_CARDNET_Simulator/lib:$SW_HOME/FEP2_CARDNET_Simulator/lib
+    export INSTALL4J_JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64/jre
+
+fi
+
+if [ "$1" = "ognAST220" ]
+then
+	Addpath $SW_HOME/3rdparty/linux/tibas/1.1.1/bin
+
+	unset LD_LIBRARY_PATH
+	AddLibraryPath $SW_HOME/distrib/kabira/lib
+	#AddLibraryPath $SW_HOME/3rdparty/linux/apache/2.2.21_ssl_x86_64/lib
+	#AddLibraryPath /lib64
+	AddLibraryPath $SW_HOME/3rdparty/linux/tibas/1.1.1/lib
+
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.6.0_30_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+	export INSTALL4J_JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64/jre
+fi
+
+if [ "$1" = "ognAST223" ]
+then
+    Addpath $SW_HOME/3rdparty/linux/tibas/1.1.1/bin
+
+    unset LD_LIBRARY_PATH
+    AddLibraryPath $SW_HOME/distrib/kabira/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/apache/2.2.21_ssl_x86_64/lib
+    #AddLibraryPath /lib64
+    AddLibraryPath $SW_HOME/3rdparty/linux/tibas/1.1.1/lib
+
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.6.0_30_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+	export INSTALL4J_JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64/jre
+fi
+
+if [ "$1" = "ognAST224" ]
+then
+	export TIBRV_HOME=/opt/kabira/users/ognAST224/3rdparty/linux/tibco-rv/8.3.0
+    Addpath $SW_HOME/3rdparty/linux/tibas/1.1.1/bin
+
+    unset LD_LIBRARY_PATH
+    AddLibraryPath $SW_HOME/distrib/kabira/lib
+    AddLibraryPath $SW_HOME/3rdparty/linux/tibas/1.1.1/lib
+    AddLibraryPath $TIBRV_HOME/lib
+
+
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.7.0_09_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+
+	alias mvn='/opt/kabira/3rdparty/generic/maven/3.0.5/bin/mvn'
+
+fi
+
+if [ "$1" = "ognAST250" ]
+	then
+	export TIBRV_HOME=/opt/kabira/users/ognAST250/3rdparty/linux/tibco-rv/8.3.0
+	Addpath $SW_HOME/3rdparty/linux/tibas/1.1.1/bin
+
+	unset LD_LIBRARY_PATH
+	AddLibraryPath $SW_HOME/distrib/kabira/lib
+	AddLibraryPath $SW_HOME/3rdparty/linux/tibas/1.1.1/lib
+	AddLibraryPath $TIBRV_HOME/lib
+
+
+	export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.7.0_09_x86_64
+	CLASSPATH=.:$JAVA_HOME/lib
+
+	alias mvn='/opt/kabira/3rdparty/generic/maven/3.0.5/bin/mvn'
+
+fi
+
+
+if [ "$1" = "ognAST230" ]
+then
+    Addpath $SW_HOME/3rdparty/linux/tibas/1.1.1/bin
+
+    unset LD_LIBRARY_PATH
+    AddLibraryPath $SW_HOME/distrib/kabira/lib
+    #AddLibraryPath $SW_HOME/3rdparty/linux/apache/2.2.21_ssl_x86_64/lib
+    #AddLibraryPath /lib64
+    AddLibraryPath $SW_HOME/3rdparty/linux/tibas/1.1.1/lib
+
+    export JAVA_HOME=$SW_HOME/3rdparty/linux/jdk/1.6.0_30_x86_64
+    CLASSPATH=.:$JAVA_HOME/lib
+    export INSTALL4J_JAVA_HOME=$SW_HOME/3rdparty/sol/jdk/1.6.0_03_64/jre
+fi
+
+
+
+##################ognKPSA315_ODO_test###############
+if [ "$1" = ognKPSA315_ODO_test ]
+then
+        export ORACLE_SID=DB10G264.KABIRA.FR
+        export ORACLE_HOME=/opt/oracle/10g2_64
+
+        export SDD_BIN=$ORACLE_HOME/bin
+        export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+        Addpath $ORACLE_HOME/bin
+        Addpath .
+
+        AddLibraryPath $ORACLE_HOME/lib
+	AddLibraryPath /opt/kabira/users/ogn_odo_kpsa_src/3rdparty/sol/odbc/51_64/lib
+
+fi
+
+##################ognXDR300##################
+if [ "$1" = ognXDR300 ]
+then
+        Addpath $SW_HOME/kabira/kpsa/component
+		Addpath $SW_HOME/kabira/kxdr/component
+		Addpath $SW_HOME/kabira/kxdr/export
+fi
+
+
+#Addpath /opt/softwire/release/MDL2SOC11SOL/objectswitch/distrib/$SW_PLATFORM/mdl2soc
+#AddLibraryPath /opt/softwire/release/MDL2SOC11SOL/objectswitch/distrib/$SW_PLATFORM/mdl2soc
+
+
+#########SPECIAL##########
+export PROJ=`echo $SW_HOME | cut -d/ -f6`
+export USER=`echo $SW_HOME | cut -d/ -f5`
+alias cl='echo "In CODELINE tree, "; echo "using project   : $2"; echo "using username  : $USER";cd $SW_HOME'
+
+alias removeusertree='cd;sw_admin removeusertree -proj $PROJ -user $USER'
+alias refresh='sw_admin newuser -proj $PROJ -user $USER -productlist $*'
+alias mycoords='coords | grep $USERNAME'
+alias dp='cat $SW_HOME/distrib/$SW_PLATFORM/dp/DEPENDENCY'
+alias psgrep='ps | grep'
+alias netgrep='netstat -a | grep'
+alias swdispsw='switchadmin display switch'
+alias swstartsw='switchadmin start switch'
+alias swstopsw='switchadmin stop switch'
+alias swrmsw='switchadmin remove switch'
+alias cd.='cd ..'
+alias cd..='cd ../..'
+alias cd...='cd ../../..'
+alias cd....='cd ../../../..'
+alias f='find . -name'
+alias upproj="sw_admin newuser -proj $2 -user $1"
+alias inqproj="sw_inquire -proj $2 -user $1"
+
+alias kps='$SW_HOME/distrib/kabira/projectservice/scripts/projectservice'
+
+PROMPT_COMMAND='echo -ne "\033]0;${1}  -  ${2}\007"'
+export EDITOR=vi
+
+#******** PURIFY ***********#
+alias purify='. $HOME/bin/purify_env.sh;. $HOME/bin/purifyplus_setup.sh'
+
+#export PATH=/import/home/xdekeppe:$PATH
+alias log='/import/home/xdekeppe/logReader.ksh'
+alias dgf='/import/home/xdekeppe/debugfilter.ksh'
+
+cd $SW_HOME
+#clear
+
+alias cdsw='cd $SW_HOME'
+alias gktsprof='gvim ~/ktsprof'
+alias .kts=". ~/ktsprof $1 $2 $3 $4"
+
+if [ "$HOST" = 'halles' ]
+then
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/sfw/lib
+	export PATH=$PATH:/usr/sfw/bin
+fi
+ 
