@@ -90,7 +90,8 @@ The above says, deploy specification is mandatory; but learnt that test script w
 Noticed that runtest.ksh calling the script => _$SW_HOME/ftp/paftp/linux/include/testenv.ksh_
 _$SW_HOME/ftp/paftp/linux/include/testenv.ksh => $SW_HOME/distrib/kabira/include/runtest.env_
 _$SW_HOME/distrib/kabira/include/runtest.env => $SW_HOME/distrib/kabira/include/swenv.sh_
-also using _$SW_HOME/distrib/kabira/bin/swregistry_
+
+Also using _$SW_HOME/distrib/kabira/bin/swregistry_
 
 Learnt that, user have to modify below data in runtest.ksh; at least ftp connection,  directory name credentials
 ```
