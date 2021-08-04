@@ -7,3 +7,18 @@ In case, any intermediate error, and like to clean, then run => dmake clobber or
 When there is error for missing header file, then check for the same under below directories
 # ls $SW_HOME/distrib/kabira/include
 # ls $SW_HOME/distrib/kabira/lib
+
+
+Other notes:
+Was getting below error on first time building.
+============
+In file included from ./paftp_priv.h:20,
+                 from paftp_dimpl.cpp:15:
+./paftp.h:21:25: error: globbuiltin.h: No such file or directory
+[Info]    : dmake:  Error code 1, while making 'devobj/paftp_dimpl.o'
+dmake:  Error code 255, while making 'recursive'
+[Fatal]   : dmake failed.
+Build failed
+dmake:  Error code 250, while making '/opt/kabira/users/rsettine/BUILD/paftp/paftpALL.bldtype'
+=============
+The above got addressed when build from ftp/paftp/linux/include; this has copied the globbuiltin.h under $SW_HOME/distrib/kabira/include directory.
