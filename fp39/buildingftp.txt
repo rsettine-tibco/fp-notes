@@ -1,3 +1,5 @@
+==> Building FTP:
+
 trocadero:/opt/kabira/users/rsettine/ftp/paftp/linux/include => dmake BUILD=ALL
 trocadero:/opt/kabira/users/rsettine/ftp/paftp/linux/libsrc => dmake BUILD=ALL
 trocadero:/opt/kabira/users/rsettine/ftp/paftp/linux/src => dmakeBUILD=ALL
@@ -22,3 +24,38 @@ Build failed
 dmake:  Error code 250, while making '/opt/kabira/users/rsettine/BUILD/paftp/paftpALL.bldtype'
 =============
 The above got addressed when build from ftp/paftp/linux/include; this has copied the globbuiltin.h under $SW_HOME/distrib/kabira/include directory.
+
+==> Testing FTP:
+In order to test ftp connectivity, have to build it from 
+trocadero:/opt/kabira/users/rsettine/ftp/paftp/linux/test => dmake BUILD=ALL
+
+Then run the script ./runtest.ksh
+
+However, it is running into different issue
+=============
+runtest.ksh: missing required -d option
+Usage, one of the following :
+
+runtest.ksh [-b buildType][-i][-v][-x] -d deploySpec [-d deploySpec] -e engName
+	  [-m memorySize] [-a application] [-C company]
+runtest.ksh [-b buildType][-v][-x] [-a application] [-C company] -c
+runtest.ksh [-b buildType][-v][-x] [-a application] [-C company] -i
+runtest.ksh [-b buildType][-v][-x] [-a application] [-C company] -s
+
+	-a		Application name
+	-b buildType	DEVELOPMENT|PRODUCTION. Default: DEVELOPMENT
+	-c		cleanup now
+	-C		Company name
+	-d deploySpec	deploy specification file (relative or absolute path)
+			to be loaded. This argument may appear multiple times.
+	-e engName	Test engine name.
+	-m memorySize	Shared memory size in MB
+	-i		install only - do not start components.
+	-s		stop the test node
+	-v		verbose; enable script debug printing.
+	-x		enable set -x ksh script output.
+===============
+
+Noticed that runtest.ksh calling the script => $SW_HOME/ftp/paftp/linux/include/testenv.ksh
+$SW_HOME/ftp/paftp/linux/include/testenv.ksh => $SW_HOME/distrib/kabira/include/runtest.env
+$SW_HOME/distrib/kabira/include/runtest.env => $SW_HOME/distrib/kabira/include/swenv.sh
