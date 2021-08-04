@@ -27,6 +27,7 @@ or
 dmake clobberdc
 ```
 The above stop clean and stop _Design Center_.
+
 When there is error for missing header file, then check for the same under below directories
 ```
 ls $SW_HOME/distrib/kabira/include
@@ -84,7 +85,7 @@ runtest.ksh [-b buildType][-v][-x] [-a application] [-C company] -s
 	-v		verbose; enable script debug printing.
 	-x		enable set -x ksh script output.
 ```
-The above says, deploy specification is mandatory; but learnt that test script will create that automatically. Yet to figure it out.
+The above says, deploy specification is mandatory; but learnt that test script will create that automatically. *Yet to figure it out.*
 
 Noticed that runtest.ksh calling the script => _$SW_HOME/ftp/paftp/linux/include/testenv.ksh_
 _$SW_HOME/ftp/paftp/linux/include/testenv.ksh => $SW_HOME/distrib/kabira/include/runtest.env_
