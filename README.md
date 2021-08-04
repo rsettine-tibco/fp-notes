@@ -1,7 +1,7 @@
 # README
 
 ### [docs](https://github.com/rsettine-tibco/fp-notes/tree/main/fp39/docs)
-This directory contain all the documentation for development team.
+This directory contains all the documentation for development fp components.
 ### [notes](https://github.com/rsettine-tibco/fp-notes/tree/main/fp39/notes)
 Created the information / trouble shooting based on what is tried, which might be helpful in future.
 ### [presentations](https://github.com/rsettine-tibco/fp-notes/tree/main/fp39/presentations)
