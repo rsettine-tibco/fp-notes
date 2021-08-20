@@ -15,7 +15,7 @@ dmake BUILD=ALL
 ### Build _src_
 ```
 cd $SW_HOME/ftp/paftp/linux/src
-dmakeBUILD=ALL
+dmake BUILD=ALL
 ```
 
 In case, any intermediate error in any of the above steps, and like to clean and re-run? 
