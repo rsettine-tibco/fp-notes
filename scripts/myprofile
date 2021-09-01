@@ -1,0 +1,6 @@
+#!/bin/bash
+source ktsprof ${USER} kpsa39 localhost 10
+alias dobuild='dmake clobber && dmake BUILD=ALL'
+alias dotest='dmake clobber && dmake runtest'
+alias buildComponent='sw_mkall -b ALL -p 6'
+set -o vi
