@@ -6,6 +6,12 @@ This script is used to set the development environment profile so that you are r
 It uses `ksh` shell.
 
 This script requires 4 aruments. For more details, please refer [here](https://github.com/rsettine-tibco/fp-notes/blob/main/fp39/presentations/How%20to%20build%20FP%20components.pdf).
+
+### [myprofile](https://github.com/rsettine-tibco/fp-notes/blob/main/scripts/myprofile)
+Use this script to set the development environment profile which internally call above _ktsprof_. However, need to change the value for 4th parameter in this script.
+And just call _source myprofile_.
+Also we can use the aliases while building the components.
+
 ### [setenv3.9_dev](https://github.com/rsettine-tibco/fp-notes/blob/main/fp39/scripts/setenv3.9_dev)
 Use this script to set the development envrionment profile. However, use this profile only to run the examples as this uses `bash` shell. 
 
